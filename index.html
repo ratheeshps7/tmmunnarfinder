@@ -207,6 +207,13 @@ input[type=search]::-webkit-search-cancel-button{cursor:pointer}
 .meta #count{font-weight:700;color:var(--ink)}
 .legend{font-size:12px;color:var(--muted)}
 
+.nearbynote{
+  display:none;background:rgba(14,151,184,.08);border:1px solid rgba(14,151,184,.25);line-height:1.5;
+  color:var(--cyan-deep);font-size:12.5px;font-weight:600;border-radius:var(--r-md);padding:9px 12px;margin:2px 2px 4px;
+}
+.nearbynote.show{display:block}
+.nearbynote b{color:var(--ink)}
+
 /* ---------------- grid & cards ---------------- */
 .grid{display:grid;grid-template-columns:1fr;gap:16px;padding:16px 0 34px}
 @media(min-width:640px){.grid{grid-template-columns:1fr 1fr}}
@@ -416,6 +423,12 @@ footer .contacts a:hover{color:var(--cyan)}
 .note{background:#fff;border:1px dashed var(--line);border-radius:var(--r-md);padding:10px 12px;font-size:12px;color:var(--muted);margin:6px 0 2px}
 
 /* ---------------- small screens polish ---------------- */
+@media(max-width:640px){
+  .searchrow{flex-wrap:wrap}
+  .searchbox{flex:1 1 100%}
+  .toggle{flex:1 1 100%}
+  .toggle button{flex:1}
+}
 @media(max-width:420px){
   .locbar{padding:12px}
   .btn.primary#gpsBtn{padding:11px 12px;font-size:13px}
@@ -466,6 +479,7 @@ footer .contacts a:hover{color:var(--cyan)}
    </div>
   </div>
   <div class="chips" id="chips" role="group" aria-label="Filter by category"></div>
+  <div class="nearbynote" id="nearbyNote" role="status"></div>
   <div class="meta">
     <span id="count" aria-live="polite"></span>
     <span class="legend">Distance = straight-line · tap Directions for live route</span>
@@ -599,7 +613,9 @@ const state = {
   map: null,
   markers: [],
   mapReady: false,
+  nearbyOrigin: null,      // set when a search matches a place name (DATA.bases) rather than any attraction text
 };
+const NEARBY_RADIUS_KM = 10; // how far to look when a search matches a place, not an attraction
 
 /* ============================================================
    3. DOM CACHE
@@ -629,6 +645,7 @@ const dom = {
   gInterest: $("#gInterest"),
   heroGuideLink: $("#heroGuideLink"),
   guideSection: $("#guideSection"),
+  nearbyNote: $("#nearbyNote"),
 };
 
 /* ============================================================
@@ -679,6 +696,8 @@ function km(a,b){
   return R*2*Math.asin(Math.min(1,Math.sqrt(s)));
 }
 function fmtKm(d){ return d.toFixed(d<10?1:0); }
+const ESC_MAP = {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'};
+function escHtml(s){ return String(s).replace(/[&<>"']/g, c => ESC_MAP[c]); }
 function mapsDir(name){
   const dest = encodeURIComponent(name + ", " + R_LABEL);
   const o = state.userLoc ? `&origin=${state.userLoc.lat},${state.userLoc.lng}` : "";
@@ -764,13 +783,39 @@ function initSearch(){
 /* ============================================================
    9. FILTER + SORT
    ============================================================ */
+function findPlace(query){
+  // Matches a typed search against known place names (DATA.bases) — lets
+  // guests search a village/town they've heard of (e.g. "Suryanelli") even
+  // when no attraction's name/blurb/corridor mentions that word.
+  return DATA.bases.find(b => {
+    const n = b.name.toLowerCase();
+    return n.includes(query) || query.includes(n);
+  }) || null;
+}
 function results(){
   let list = DATA.attractions.map(a => ({...a, d: state.userLoc ? km(state.userLoc, a) : null}));
   if(state.activeCats.size) list = list.filter(a => a.cats.some(c => state.activeCats.has(c)));
+  state.nearbyOrigin = null;
   if(state.query){
-    list = list.filter(a =>
+    const textMatches = list.filter(a =>
       (a.name+" "+a.blurb+" "+a.corridor+" "+a.cats.join(" ")).toLowerCase().includes(state.query)
     );
+    if(textMatches.length){
+      list = textMatches;
+    } else {
+      const place = findPlace(state.query);
+      if(place){
+        // No attraction text matched — but the search looks like a place
+        // name. Fall back to "what's near there" within NEARBY_RADIUS_KM,
+        // so guests who don't know specific spot names still get results.
+        state.nearbyOrigin = place;
+        list = list
+          .map(a => ({...a, d: km(place, a)}))
+          .filter(a => a.d <= NEARBY_RADIUS_KM);
+      } else {
+        list = [];
+      }
+    }
   }
   list.sort((x,y) => (x.d==null || y.d==null) ? x.name.localeCompare(y.name) : x.d - y.d);
   return list;
@@ -779,12 +824,12 @@ function results(){
 /* ============================================================
    10. RENDER — cards
    ============================================================ */
-function card(a){
+function card(a, originLabel){
   const col = DATA.cats[a.cats[0]] || "#173F2F";
   const tags = a.cats.map(c => `<span class="tag" style="background:${DATA.cats[c]}">${c}</span>`).join("")
     + (a.added ? `<span class="tag new">NEW</span>` : "");
-  const dist = a.d != null
-    ? `<div class="dist"><span class="dotb"></span>~${fmtKm(a.d)} km from ${state.userLoc.label}</div>`
+  const dist = a.d != null && originLabel
+    ? `<div class="dist"><span class="dotb"></span>~${fmtKm(a.d)} km from ${originLabel}</div>`
     : "";
   const inDay = state.dayList.has(a.name);
   const book = a.bookable
@@ -815,13 +860,27 @@ function card(a){
 function render(){
   buildChips();
   const list = results();
-  dom.count.textContent = `${list.length} place${list.length===1?'':'s'}` + (state.userLoc ? ` · nearest to ${state.userLoc.label} first` : "");
+  // Normalize to one {lat,lng,label} shape regardless of whether distances
+  // are measured from the guest's base or from a searched-place fallback.
+  const origin = state.nearbyOrigin
+    ? {lat: state.nearbyOrigin.lat, lng: state.nearbyOrigin.lng, label: state.nearbyOrigin.name}
+    : state.userLoc;
+
+  if(state.nearbyOrigin){
+    dom.count.textContent = `${list.length} place${list.length===1?'':'s'} · within ${NEARBY_RADIUS_KM}km of ${state.nearbyOrigin.name}`;
+    dom.nearbyNote.innerHTML = `No exact match for "<b>${escHtml(state.query)}</b>" — showing spots within ${NEARBY_RADIUS_KM}km of <b>${state.nearbyOrigin.name}</b>.`;
+    dom.nearbyNote.classList.add("show");
+  } else {
+    dom.count.textContent = `${list.length} place${list.length===1?'':'s'}` + (state.userLoc ? ` · nearest to ${state.userLoc.label} first` : "");
+    dom.nearbyNote.classList.remove("show");
+  }
+
   if(state.view === "list"){
     dom.grid.innerHTML = list.length
-      ? list.map(card).join("")
+      ? list.map(a => card(a, origin ? origin.label : null)).join("")
       : `<div class="empty"><span class="emoji">🧭</span>No matches — try a different filter or search.</div>`;
   }
-  if(state.view === "map" && state.mapReady) drawMarkers(list);
+  if(state.view === "map" && state.mapReady) drawMarkers(list, origin);
   updateTray();
 }
 
@@ -859,7 +918,7 @@ function initMap(){
   }).addTo(state.map);
   state.mapReady = true;
 }
-function drawMarkers(list){
+function drawMarkers(list, origin){
   state.markers.forEach(m => state.map.removeLayer(m));
   state.markers = [];
   const grp = [];
@@ -870,15 +929,15 @@ function drawMarkers(list){
       iconSize:[26,26], iconAnchor:[13,26]
     });
     const m = L.marker([a.lat,a.lng], {icon:ic}).addTo(state.map);
-    const d = a.d != null ? `<br><small>~${fmtKm(a.d)} km from ${state.userLoc.label}</small>` : "";
+    const d = a.d != null && origin ? `<br><small>~${fmtKm(a.d)} km from ${origin.label}</small>` : "";
     m.bindPopup(`<b>${a.name}</b>${d}<br><a href="${mapsDir(a.name)}" target="_blank" rel="noopener">Directions ➜</a>`);
     state.markers.push(m); grp.push([a.lat,a.lng]);
   });
-  if(state.userLoc){
+  if(origin){
     const ic = L.divIcon({className:"", html:`<div class="usermark"><span class="pulse"></span><span class="core"></span></div>`, iconSize:[16,16], iconAnchor:[8,8]});
-    const um = L.marker([state.userLoc.lat, state.userLoc.lng], {icon:ic}).addTo(state.map);
-    um.bindPopup(`<b>${state.userLoc.label}</b>`);
-    state.markers.push(um); grp.push([state.userLoc.lat, state.userLoc.lng]);
+    const um = L.marker([origin.lat, origin.lng], {icon:ic}).addTo(state.map);
+    um.bindPopup(`<b>${origin.label}</b>`);
+    state.markers.push(um); grp.push([origin.lat, origin.lng]);
   }
   if(grp.length) state.map.fitBounds(grp, {padding:[40,40], maxZoom:12});
 }
