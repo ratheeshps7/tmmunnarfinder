@@ -48,7 +48,7 @@
   --shadow-fab:0 10px 26px rgba(0,0,0,.22);
   --ease:cubic-bezier(.22,.9,.32,1);
   --dur-fast:.16s; --dur-med:.25s;
-  --z-toolbar:40; --z-tray:55; --z-fab:60; --z-map-fab:45;
+  --z-toolbar:40; --z-tray:55; --z-fab:60; --z-map-fab:45; --z-consent:65;
 }
 
 *{box-sizing:border-box}
@@ -420,6 +420,20 @@ footer .contacts a:hover{color:var(--cyan)}
 .tray .btn.send{background:var(--whatsapp);color:var(--whatsapp-ink)}
 .tray .btn.clear{background:transparent;color:#cfe3d6;border:1px solid rgba(255,255,255,.25)}
 
+/* ---------------- analytics consent banner ---------------- */
+.consentbar{
+  position:fixed;left:0;right:0;bottom:0;z-index:var(--z-consent);transform:translateY(120%);
+  transition:transform var(--dur-med) var(--ease);
+  background:var(--cream);color:var(--ink);padding:14px 16px calc(14px + env(safe-area-inset-bottom));
+  box-shadow:0 -10px 30px rgba(0,0,0,.18);border-top:2px solid var(--forest);
+}
+.consentbar.show{transform:translateY(0)}
+.consentbar .inner{max-width:1180px;margin:0 auto;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.consentbar p{flex:1;min-width:220px;font-size:13px;line-height:1.5;margin:0}
+.consentbar p a{color:var(--forest);font-weight:700}
+.consentbar .consentbtns{display:flex;gap:8px;flex:0 0 auto}
+@media(max-width:520px){.consentbar .inner{flex-direction:column;align-items:stretch}.consentbar .consentbtns{justify-content:flex-end}}
+
 .note{background:#fff;border:1px dashed var(--line);border-radius:var(--r-md);padding:10px 12px;font-size:12px;color:var(--muted);margin:6px 0 2px}
 
 /* ---------------- small screens polish ---------------- */
@@ -573,6 +587,17 @@ footer .contacts a:hover{color:var(--cyan)}
  <span class="lbl">Plan my trip</span>
 </button>
 
+<!-- analytics consent banner — only shown/relevant once DATA.ga4MeasurementId is set -->
+<div class="consentbar" id="consentBar" role="dialog" aria-live="polite" aria-label="Cookie consent">
+ <div class="inner">
+  <p>We use analytics cookies to understand how guests use this page, so we can improve it. No personal data is sold. <a href="https://trekkingmiles.com" target="_blank" rel="noopener">Learn more</a></p>
+  <div class="consentbtns">
+   <button class="btn clear" id="consentDecline" type="button">Decline</button>
+   <button class="btn send" id="consentAccept" type="button">Accept</button>
+  </div>
+ </div>
+</div>
+
 <footer>
  <div class="wrap ft">
   <div>
@@ -590,6 +615,10 @@ footer .contacts a:hover{color:var(--cyan)}
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<!-- Vercel Web Analytics — cookieless page-view tracking, no consent needed.
+     Only works once deployed on Vercel with Analytics enabled in the project
+     dashboard (Project → Analytics → Enable). Fails silently elsewhere. -->
+<script defer src="/_vercel/insights/script.js"></script>
 <script>
 (function(){
 "use strict";
@@ -599,7 +628,7 @@ footer .contacts a:hover{color:var(--cyan)}
       published Google Sheet CSV (see DATA.sheetCsvUrl at bottom).
       Adding/editing a spot must never require touching the code below.
    ============================================================ */
-const DATA = {"bases": [{"id": "chinnakanal", "name": "Chinnakanal", "lat": 10.03, "lng": 77.185}, {"id": "munnar", "name": "Munnar Town", "lat": 10.089, "lng": 77.06}, {"id": "mattupetty", "name": "Mattupetty", "lat": 10.107, "lng": 77.126}, {"id": "devikulam", "name": "Devikulam", "lat": 10.05, "lng": 77.1}, {"id": "chithira", "name": "Chithirapuram", "lat": 10.03, "lng": 77.03}, {"id": "suryanelli", "name": "Suryanelli", "lat": 10.01, "lng": 77.22}, {"id": "marayoor", "name": "Marayoor", "lat": 10.278, "lng": 77.16}, {"id": "vattavada", "name": "Vattavada", "lat": 10.2, "lng": 77.24}, {"id": "kanthalloor", "name": "Kanthalloor", "lat": 10.22, "lng": 77.19}, {"id": "anachal", "name": "Anachal", "lat": 10.02, "lng": 76.98}], "cats": {"Viewpoint": "#0E97B8", "Waterfall": "#2F86C6", "Dam / Lake": "#157A63", "Tea": "#4F9E3E", "Wildlife": "#6E8B2E", "Adventure": "#C14453", "Trek": "#B85C2A", "Cultural": "#8A5A2B", "Garden": "#5AA84A", "Family": "#D98A1E", "Nature": "#3E9E7A"}, "attractions": [{"name": "Anayirankal Dam", "corridor": "Around Chinnakanal", "cats": ["Dam / Lake", "Nature"], "blurb": "Calm reservoir ringed by tea and forest — great at dawn for boating and elephant sightings.", "lat": 10.017, "lng": 77.205, "added": false, "verified": false, "bookable": false}, {"name": "Power House Waterfall", "corridor": "Around Chinnakanal", "cats": ["Waterfall"], "blurb": "Roadside cascade near Chinnakanal; fullest just after the monsoon.", "lat": 10.033, "lng": 77.183, "added": false, "verified": false, "bookable": false}, {"name": "Periyakanal Tea Plantation", "corridor": "Around Chinnakanal", "cats": ["Tea", "Waterfall"], "blurb": "Quiet tea slopes hiding a stream and small falls — an easy short walk.", "lat": 10.005, "lng": 77.16, "added": false, "verified": false, "bookable": false}, {"name": "Eagle's Flight — Zipline & Kayaking", "corridor": "Around Chinnakanal", "cats": ["Adventure"], "blurb": "India's longest zipline plus kayaking; book a slot ahead on weekends.", "lat": 10.02, "lng": 77.2, "added": false, "verified": false, "bookable": true}, {"name": "Kolukkumalai (Sunrise)", "corridor": "Around Chinnakanal", "cats": ["Viewpoint", "Adventure"], "blurb": "World's highest organic tea estate — jeep up before dawn for a sea-of-clouds sunrise.", "lat": 9.985, "lng": 77.26, "added": false, "verified": false, "bookable": true}, {"name": "Gap Road View Point", "corridor": "Towards Munnar", "cats": ["Viewpoint"], "blurb": "Sweeping valley overlook on the Munnar road — a quick, rewarding photo stop.", "lat": 10.045, "lng": 77.172, "added": false, "verified": false, "bookable": false}, {"name": "Chokramudi Peak (Entrance)", "corridor": "Towards Munnar", "cats": ["Trek", "Viewpoint"], "blurb": "Trailhead for the Chokramudi grassland trek with 360° high-range views.", "lat": 10.062, "lng": 77.1, "added": false, "verified": false, "bookable": false}, {"name": "Lockhart Gap View", "corridor": "Towards Munnar", "cats": ["Viewpoint"], "blurb": "Misty gap with layered ridgelines — best in the early morning light.", "lat": 10.02, "lng": 77.135, "added": false, "verified": false, "bookable": false}, {"name": "Lockhart Tea Plantation", "corridor": "Towards Munnar", "cats": ["Tea"], "blurb": "Rolling estate walks through classic Munnar tea country.", "lat": 10.02, "lng": 77.133, "added": false, "verified": false, "bookable": false}, {"name": "Lockhart Tea Factory — Munnar Tea Tales", "corridor": "Towards Munnar", "cats": ["Tea", "Cultural"], "blurb": "Guided 'from leaf to cup' factory tour with tastings.", "lat": 10.021, "lng": 77.132, "added": false, "verified": false, "bookable": true}, {"name": "Signal Point", "corridor": "Towards Munnar", "cats": ["Viewpoint"], "blurb": "Panoramic ridge viewpoint popular for cloud-play and sunsets.", "lat": 10.052, "lng": 77.145, "added": false, "verified": false, "bookable": false}, {"name": "Botanical Garden (Munnar)", "corridor": "Towards Munnar", "cats": ["Garden"], "blurb": "Landscaped gardens and greenhouse — an easy family stroll.", "lat": 10.075, "lng": 77.062, "added": false, "verified": false, "bookable": false}, {"name": "Flower Garden / Rose Garden", "corridor": "Towards Mattupetty", "cats": ["Garden"], "blurb": "Terraced beds of roses and seasonal blooms with hill backdrops.", "lat": 10.1, "lng": 77.12, "added": false, "verified": false, "bookable": false}, {"name": "Photo Point", "corridor": "Towards Mattupetty", "cats": ["Viewpoint"], "blurb": "The classic tea-and-stream frame everyone stops for.", "lat": 10.1, "lng": 77.105, "added": false, "verified": false, "bookable": false}, {"name": "Carmelagiri Elephant Park / Safari", "corridor": "Towards Mattupetty", "cats": ["Family", "Adventure"], "blurb": "Elephant rides and photo sessions in a tea-estate setting.", "lat": 10.103, "lng": 77.112, "added": false, "verified": false, "bookable": true}, {"name": "Mattupetty Tea Factory", "corridor": "Towards Mattupetty", "cats": ["Tea"], "blurb": "Working factory tour close to the dam.", "lat": 10.104, "lng": 77.121, "added": false, "verified": false, "bookable": false}, {"name": "Mattupetty Dam", "corridor": "Towards Mattupetty", "cats": ["Dam / Lake"], "blurb": "Iconic reservoir with speed-boating and shady lakeside spots.", "lat": 10.107, "lng": 77.126, "added": false, "verified": false, "bookable": false}, {"name": "Elephant Crossing Zone", "corridor": "Towards Mattupetty", "cats": ["Wildlife"], "blurb": "Forest stretch where wild elephants often cross — drive slow, don't stop.", "lat": 10.112, "lng": 77.14, "added": false, "verified": false, "bookable": false}, {"name": "Echo Point", "corridor": "Towards Mattupetty", "cats": ["Viewpoint"], "blurb": "Lakeside spot famous for its natural echo; buzzing on weekends.", "lat": 10.116, "lng": 77.146, "added": false, "verified": false, "bookable": false}, {"name": "Kundala Dam", "corridor": "Towards Mattupetty", "cats": ["Dam / Lake"], "blurb": "Arch dam over a pretty lake on the Top Station road.", "lat": 10.15, "lng": 77.16, "added": false, "verified": false, "bookable": false}, {"name": "Kundala Lake — Boating & Cherry Blossom", "corridor": "Towards Mattupetty", "cats": ["Dam / Lake", "Nature"], "blurb": "Star-shaped lake with pedal boats; Japanese cherry blossoms flower twice a year.", "lat": 10.152, "lng": 77.162, "added": true, "verified": false, "bookable": false}, {"name": "Top Station (TN Border)", "corridor": "Towards Mattupetty", "cats": ["Viewpoint"], "blurb": "Highest viewpoint in the area, into Tamil Nadu — best before the mist rolls in.", "lat": 10.155, "lng": 77.24, "added": false, "verified": false, "bookable": false}, {"name": "Vattavada (Farm Village)", "corridor": "Towards Mattupetty", "cats": ["Nature"], "blurb": "Cool vegetable-farming valley; strawberries, passion fruit and homestays.", "lat": 10.2, "lng": 77.24, "added": false, "verified": false, "bookable": true}, {"name": "Meesapulimala (Trek)", "corridor": "Towards Mattupetty", "cats": ["Trek", "Adventure"], "blurb": "South India's 2nd-highest peak — a guided shola-grassland ridge trek (permit needed).", "lat": 10.13, "lng": 77.19, "added": true, "verified": false, "bookable": true}, {"name": "Tata Tea Museum (KDHP)", "corridor": "Towards Coimbatore", "cats": ["Tea", "Cultural"], "blurb": "Munnar's tea story, vintage machinery and tastings.", "lat": 10.09, "lng": 77.05, "added": false, "verified": false, "bookable": false}, {"name": "Eravikulam National Park (Rajamala)", "corridor": "Towards Coimbatore", "cats": ["Wildlife", "Nature"], "blurb": "Home of the Nilgiri tahr and the Neelakurinji bloom; book slots early.", "lat": 10.2, "lng": 77.05, "added": false, "verified": false, "bookable": false}, {"name": "Anamudi Peak (Eravikulam)", "corridor": "Towards Coimbatore", "cats": ["Trek", "Nature"], "blurb": "Highest peak in South India, viewed from Rajamala (summit access restricted).", "lat": 10.17, "lng": 77.06, "added": true, "verified": false, "bookable": false}, {"name": "Nayamakkad Waterfalls", "corridor": "Towards Coimbatore", "cats": ["Waterfall"], "blurb": "Long tiered falls tumbling through tea slopes.", "lat": 10.14, "lng": 77.02, "added": false, "verified": false, "bookable": false}, {"name": "Nayamakkad View Point", "corridor": "Towards Coimbatore", "cats": ["Viewpoint"], "blurb": "Roadside overlook of the falls and valley.", "lat": 10.141, "lng": 77.021, "added": false, "verified": false, "bookable": false}, {"name": "Lakkam Waterfalls", "corridor": "Towards Coimbatore", "cats": ["Waterfall"], "blurb": "Broad forest falls with a bathing pool on the Marayoor road.", "lat": 10.22, "lng": 77.13, "added": false, "verified": false, "bookable": false}, {"name": "Sandalwood Forest (Marayoor)", "corridor": "Towards Coimbatore", "cats": ["Nature", "Cultural"], "blurb": "India's only natural sandalwood reserve; go with the forest guides.", "lat": 10.278, "lng": 77.16, "added": false, "verified": false, "bookable": false}, {"name": "Muniyara Dolmens (Marayoor)", "corridor": "Towards Coimbatore", "cats": ["Cultural"], "blurb": "Megalithic burial chambers dating back millennia.", "lat": 10.276, "lng": 77.162, "added": false, "verified": false, "bookable": false}, {"name": "Kanthalloor (Apple Village)", "corridor": "Towards Coimbatore", "cats": ["Nature"], "blurb": "Highland farms of apples, oranges and strawberries — a scenic detour beyond Marayoor.", "lat": 10.22, "lng": 77.19, "added": true, "verified": false, "bookable": false}, {"name": "Chinnar Wildlife Sanctuary", "corridor": "Towards Coimbatore", "cats": ["Wildlife", "Nature"], "blurb": "Dry-deciduous sanctuary with grizzled giant squirrels and tribal-guided trails.", "lat": 10.32, "lng": 77.2, "added": true, "verified": false, "bookable": true}, {"name": "Thoovanam Waterfalls (Chinnar)", "corridor": "Towards Coimbatore", "cats": ["Waterfall", "Trek"], "blurb": "Powerful falls on the Pambar reached by a guided forest trek.", "lat": 10.318, "lng": 77.19, "added": true, "verified": false, "bookable": true}, {"name": "Blossom Hydel Park", "corridor": "Towards Cochin", "cats": ["Garden", "Family"], "blurb": "Riverside park with cycling tracks and rope ways — good with kids.", "lat": 10.083, "lng": 77.052, "added": false, "verified": false, "bookable": false}, {"name": "Pothamedu View Point", "corridor": "Towards Cochin", "cats": ["Viewpoint"], "blurb": "Wide tea-valley panorama, lovely at sunrise and sunset.", "lat": 10.052, "lng": 77.02, "added": false, "verified": false, "bookable": false}, {"name": "Attukad Waterfall", "corridor": "Towards Cochin", "cats": ["Waterfall"], "blurb": "Dramatic falls between Munnar and Pallivasal; thunderous in season.", "lat": 10.033, "lng": 77.005, "added": false, "verified": false, "bookable": false}, {"name": "2nd Mile View Point", "corridor": "Towards Cochin", "cats": ["Viewpoint"], "blurb": "Quiet overlook on the Cochin road — fewer crowds.", "lat": 10.03, "lng": 76.99, "added": false, "verified": false, "bookable": false}, {"name": "Chithirapuram Sunset Point", "corridor": "Towards Cochin", "cats": ["Viewpoint"], "blurb": "Old planters' township with colonial bungalows and golden-hour views.", "lat": 10.03, "lng": 77.03, "added": false, "verified": false, "bookable": false}, {"name": "Fly High — Hot Air Balloon", "corridor": "Towards Cochin", "cats": ["Adventure"], "blurb": "Tethered balloon rides over the tea country (weather-dependent).", "lat": 10.05, "lng": 77.02, "added": false, "verified": false, "bookable": true}, {"name": "Chocolate Factory", "corridor": "Towards Cochin", "cats": ["Family"], "blurb": "Handmade Munnar chocolate and spices — a fun family stop.", "lat": 10.06, "lng": 77.03, "added": false, "verified": false, "bookable": false}, {"name": "Sengulam Dam", "corridor": "Towards Cochin", "cats": ["Dam / Lake"], "blurb": "Balancing reservoir feeding the Pallivasal power station.", "lat": 10.02, "lng": 77.0, "added": false, "verified": false, "bookable": false}, {"name": "Pallivasal Falls & Power Station", "corridor": "Towards Cochin", "cats": ["Waterfall", "Cultural"], "blurb": "Kerala's first hydroelectric project with a roadside falls.", "lat": 10.02, "lng": 77.0, "added": true, "verified": false, "bookable": false}, {"name": "Spice Garden Visit", "corridor": "Towards Cochin", "cats": ["Nature", "Cultural"], "blurb": "Guided walk through cardamom, pepper and vanilla plots.", "lat": 10.05, "lng": 77.0, "added": false, "verified": false, "bookable": true}, {"name": "Cultural Events / Kalari Martial Arts", "corridor": "Towards Cochin", "cats": ["Cultural"], "blurb": "Evening Kathakali and Kalaripayattu performances in Munnar town.", "lat": 10.083, "lng": 77.06, "added": false, "verified": false, "bookable": true}, {"name": "Sita Devi (Devikulam) Lake", "corridor": "Towards Cochin", "cats": ["Dam / Lake", "Nature"], "blurb": "Quiet mineral lake ringed by hills — calm stop with trout fishing.", "lat": 10.05, "lng": 77.1, "added": true, "verified": false, "bookable": false}, {"name": "Chokramudi Peak", "corridor": "Trek Zones", "cats": ["Trek"], "blurb": "Half-day grassland summit trek with panoramic ridge views.", "lat": 10.062, "lng": 77.1, "added": false, "verified": false, "bookable": true}, {"name": "Lakshmi Hills", "corridor": "Trek Zones", "cats": ["Trek", "Viewpoint"], "blurb": "Tea-estate trek to a breezy hilltop above Munnar town.", "lat": 10.075, "lng": 77.05, "added": false, "verified": false, "bookable": true}], "defaultBase": "chinnakanal", "region": "Munnar, Kerala", "whatsapp": "919633779922", "sheetCsvUrl": "", "guideInterests": ["Trekking", "Wildlife & Nature", "Cultural & Local Life", "Photography", "Family-friendly", "Adventure", "Tea Trails", "Other"], "guideRequestWebhookUrl": "", "comingSoon": [{"id": "resorts", "icon": "🏨", "title": "Resorts", "blurb": "Curated resort stays across Munnar's best corridors, matched to the spots you love."}, {"id": "homestays", "icon": "🏡", "title": "Homestays", "blurb": "Real Kerala hospitality — family-run homestays for a slower, more local Munnar."}, {"id": "experiences", "icon": "🌿", "title": "Local Experiences", "blurb": "Guided treks, tea-estate walks and curated add-ons — beyond what a map can show you."}, {"id": "packages", "icon": "🗺️", "title": "Munnar Packages", "blurb": "Multi-day itineraries bundling stay, transport and experiences — planned start to finish."}]};
+const DATA = {"bases": [{"id": "chinnakanal", "name": "Chinnakanal", "lat": 10.03, "lng": 77.185}, {"id": "munnar", "name": "Munnar Town", "lat": 10.089, "lng": 77.06}, {"id": "mattupetty", "name": "Mattupetty", "lat": 10.107, "lng": 77.126}, {"id": "devikulam", "name": "Devikulam", "lat": 10.05, "lng": 77.1}, {"id": "chithira", "name": "Chithirapuram", "lat": 10.03, "lng": 77.03}, {"id": "suryanelli", "name": "Suryanelli", "lat": 10.01, "lng": 77.22}, {"id": "marayoor", "name": "Marayoor", "lat": 10.278, "lng": 77.16}, {"id": "vattavada", "name": "Vattavada", "lat": 10.2, "lng": 77.24}, {"id": "kanthalloor", "name": "Kanthalloor", "lat": 10.22, "lng": 77.19}, {"id": "anachal", "name": "Anachal", "lat": 10.02, "lng": 76.98}], "cats": {"Viewpoint": "#0E97B8", "Waterfall": "#2F86C6", "Dam / Lake": "#157A63", "Tea": "#4F9E3E", "Wildlife": "#6E8B2E", "Adventure": "#C14453", "Trek": "#B85C2A", "Cultural": "#8A5A2B", "Garden": "#5AA84A", "Family": "#D98A1E", "Nature": "#3E9E7A"}, "attractions": [{"name": "Anayirankal Dam", "corridor": "Around Chinnakanal", "cats": ["Dam / Lake", "Nature"], "blurb": "Calm reservoir ringed by tea and forest — great at dawn for boating and elephant sightings.", "lat": 10.017, "lng": 77.205, "added": false, "verified": false, "bookable": false}, {"name": "Power House Waterfall", "corridor": "Around Chinnakanal", "cats": ["Waterfall"], "blurb": "Roadside cascade near Chinnakanal; fullest just after the monsoon.", "lat": 10.033, "lng": 77.183, "added": false, "verified": false, "bookable": false}, {"name": "Periyakanal Tea Plantation", "corridor": "Around Chinnakanal", "cats": ["Tea", "Waterfall"], "blurb": "Quiet tea slopes hiding a stream and small falls — an easy short walk.", "lat": 10.005, "lng": 77.16, "added": false, "verified": false, "bookable": false}, {"name": "Eagle's Flight — Zipline & Kayaking", "corridor": "Around Chinnakanal", "cats": ["Adventure"], "blurb": "India's longest zipline plus kayaking; book a slot ahead on weekends.", "lat": 10.02, "lng": 77.2, "added": false, "verified": false, "bookable": true}, {"name": "Kolukkumalai (Sunrise)", "corridor": "Around Chinnakanal", "cats": ["Viewpoint", "Adventure"], "blurb": "World's highest organic tea estate — jeep up before dawn for a sea-of-clouds sunrise.", "lat": 9.985, "lng": 77.26, "added": false, "verified": false, "bookable": true}, {"name": "Gap Road View Point", "corridor": "Towards Munnar", "cats": ["Viewpoint"], "blurb": "Sweeping valley overlook on the Munnar road — a quick, rewarding photo stop.", "lat": 10.045, "lng": 77.172, "added": false, "verified": false, "bookable": false}, {"name": "Chokramudi Peak (Entrance)", "corridor": "Towards Munnar", "cats": ["Trek", "Viewpoint"], "blurb": "Trailhead for the Chokramudi grassland trek with 360° high-range views.", "lat": 10.062, "lng": 77.1, "added": false, "verified": false, "bookable": false}, {"name": "Lockhart Gap View", "corridor": "Towards Munnar", "cats": ["Viewpoint"], "blurb": "Misty gap with layered ridgelines — best in the early morning light.", "lat": 10.02, "lng": 77.135, "added": false, "verified": false, "bookable": false}, {"name": "Lockhart Tea Plantation", "corridor": "Towards Munnar", "cats": ["Tea"], "blurb": "Rolling estate walks through classic Munnar tea country.", "lat": 10.02, "lng": 77.133, "added": false, "verified": false, "bookable": false}, {"name": "Lockhart Tea Factory — Munnar Tea Tales", "corridor": "Towards Munnar", "cats": ["Tea", "Cultural"], "blurb": "Guided 'from leaf to cup' factory tour with tastings.", "lat": 10.021, "lng": 77.132, "added": false, "verified": false, "bookable": true}, {"name": "Signal Point", "corridor": "Towards Munnar", "cats": ["Viewpoint"], "blurb": "Panoramic ridge viewpoint popular for cloud-play and sunsets.", "lat": 10.052, "lng": 77.145, "added": false, "verified": false, "bookable": false}, {"name": "Botanical Garden (Munnar)", "corridor": "Towards Munnar", "cats": ["Garden"], "blurb": "Landscaped gardens and greenhouse — an easy family stroll.", "lat": 10.075, "lng": 77.062, "added": false, "verified": false, "bookable": false}, {"name": "Flower Garden / Rose Garden", "corridor": "Towards Mattupetty", "cats": ["Garden"], "blurb": "Terraced beds of roses and seasonal blooms with hill backdrops.", "lat": 10.1, "lng": 77.12, "added": false, "verified": false, "bookable": false}, {"name": "Photo Point", "corridor": "Towards Mattupetty", "cats": ["Viewpoint"], "blurb": "The classic tea-and-stream frame everyone stops for.", "lat": 10.1, "lng": 77.105, "added": false, "verified": false, "bookable": false}, {"name": "Carmelagiri Elephant Park / Safari", "corridor": "Towards Mattupetty", "cats": ["Family", "Adventure"], "blurb": "Elephant rides and photo sessions in a tea-estate setting.", "lat": 10.103, "lng": 77.112, "added": false, "verified": false, "bookable": true}, {"name": "Mattupetty Tea Factory", "corridor": "Towards Mattupetty", "cats": ["Tea"], "blurb": "Working factory tour close to the dam.", "lat": 10.104, "lng": 77.121, "added": false, "verified": false, "bookable": false}, {"name": "Mattupetty Dam", "corridor": "Towards Mattupetty", "cats": ["Dam / Lake"], "blurb": "Iconic reservoir with speed-boating and shady lakeside spots.", "lat": 10.107, "lng": 77.126, "added": false, "verified": false, "bookable": false}, {"name": "Elephant Crossing Zone", "corridor": "Towards Mattupetty", "cats": ["Wildlife"], "blurb": "Forest stretch where wild elephants often cross — drive slow, don't stop.", "lat": 10.112, "lng": 77.14, "added": false, "verified": false, "bookable": false}, {"name": "Echo Point", "corridor": "Towards Mattupetty", "cats": ["Viewpoint"], "blurb": "Lakeside spot famous for its natural echo; buzzing on weekends.", "lat": 10.116, "lng": 77.146, "added": false, "verified": false, "bookable": false}, {"name": "Kundala Dam", "corridor": "Towards Mattupetty", "cats": ["Dam / Lake"], "blurb": "Arch dam over a pretty lake on the Top Station road.", "lat": 10.15, "lng": 77.16, "added": false, "verified": false, "bookable": false}, {"name": "Kundala Lake — Boating & Cherry Blossom", "corridor": "Towards Mattupetty", "cats": ["Dam / Lake", "Nature"], "blurb": "Star-shaped lake with pedal boats; Japanese cherry blossoms flower twice a year.", "lat": 10.152, "lng": 77.162, "added": true, "verified": false, "bookable": false}, {"name": "Top Station (TN Border)", "corridor": "Towards Mattupetty", "cats": ["Viewpoint"], "blurb": "Highest viewpoint in the area, into Tamil Nadu — best before the mist rolls in.", "lat": 10.155, "lng": 77.24, "added": false, "verified": false, "bookable": false}, {"name": "Vattavada (Farm Village)", "corridor": "Towards Mattupetty", "cats": ["Nature"], "blurb": "Cool vegetable-farming valley; strawberries, passion fruit and homestays.", "lat": 10.2, "lng": 77.24, "added": false, "verified": false, "bookable": true}, {"name": "Meesapulimala (Trek)", "corridor": "Towards Mattupetty", "cats": ["Trek", "Adventure"], "blurb": "South India's 2nd-highest peak — a guided shola-grassland ridge trek (permit needed).", "lat": 10.13, "lng": 77.19, "added": true, "verified": false, "bookable": true}, {"name": "Tata Tea Museum (KDHP)", "corridor": "Towards Coimbatore", "cats": ["Tea", "Cultural"], "blurb": "Munnar's tea story, vintage machinery and tastings.", "lat": 10.09, "lng": 77.05, "added": false, "verified": false, "bookable": false}, {"name": "Eravikulam National Park (Rajamala)", "corridor": "Towards Coimbatore", "cats": ["Wildlife", "Nature"], "blurb": "Home of the Nilgiri tahr and the Neelakurinji bloom; book slots early.", "lat": 10.2, "lng": 77.05, "added": false, "verified": false, "bookable": false}, {"name": "Anamudi Peak (Eravikulam)", "corridor": "Towards Coimbatore", "cats": ["Trek", "Nature"], "blurb": "Highest peak in South India, viewed from Rajamala (summit access restricted).", "lat": 10.17, "lng": 77.06, "added": true, "verified": false, "bookable": false}, {"name": "Nayamakkad Waterfalls", "corridor": "Towards Coimbatore", "cats": ["Waterfall"], "blurb": "Long tiered falls tumbling through tea slopes.", "lat": 10.14, "lng": 77.02, "added": false, "verified": false, "bookable": false}, {"name": "Nayamakkad View Point", "corridor": "Towards Coimbatore", "cats": ["Viewpoint"], "blurb": "Roadside overlook of the falls and valley.", "lat": 10.141, "lng": 77.021, "added": false, "verified": false, "bookable": false}, {"name": "Lakkam Waterfalls", "corridor": "Towards Coimbatore", "cats": ["Waterfall"], "blurb": "Broad forest falls with a bathing pool on the Marayoor road.", "lat": 10.22, "lng": 77.13, "added": false, "verified": false, "bookable": false}, {"name": "Sandalwood Forest (Marayoor)", "corridor": "Towards Coimbatore", "cats": ["Nature", "Cultural"], "blurb": "India's only natural sandalwood reserve; go with the forest guides.", "lat": 10.278, "lng": 77.16, "added": false, "verified": false, "bookable": false}, {"name": "Muniyara Dolmens (Marayoor)", "corridor": "Towards Coimbatore", "cats": ["Cultural"], "blurb": "Megalithic burial chambers dating back millennia.", "lat": 10.276, "lng": 77.162, "added": false, "verified": false, "bookable": false}, {"name": "Kanthalloor (Apple Village)", "corridor": "Towards Coimbatore", "cats": ["Nature"], "blurb": "Highland farms of apples, oranges and strawberries — a scenic detour beyond Marayoor.", "lat": 10.22, "lng": 77.19, "added": true, "verified": false, "bookable": false}, {"name": "Chinnar Wildlife Sanctuary", "corridor": "Towards Coimbatore", "cats": ["Wildlife", "Nature"], "blurb": "Dry-deciduous sanctuary with grizzled giant squirrels and tribal-guided trails.", "lat": 10.32, "lng": 77.2, "added": true, "verified": false, "bookable": true}, {"name": "Thoovanam Waterfalls (Chinnar)", "corridor": "Towards Coimbatore", "cats": ["Waterfall", "Trek"], "blurb": "Powerful falls on the Pambar reached by a guided forest trek.", "lat": 10.318, "lng": 77.19, "added": true, "verified": false, "bookable": true}, {"name": "Blossom Hydel Park", "corridor": "Towards Cochin", "cats": ["Garden", "Family"], "blurb": "Riverside park with cycling tracks and rope ways — good with kids.", "lat": 10.083, "lng": 77.052, "added": false, "verified": false, "bookable": false}, {"name": "Pothamedu View Point", "corridor": "Towards Cochin", "cats": ["Viewpoint"], "blurb": "Wide tea-valley panorama, lovely at sunrise and sunset.", "lat": 10.052, "lng": 77.02, "added": false, "verified": false, "bookable": false}, {"name": "Attukad Waterfall", "corridor": "Towards Cochin", "cats": ["Waterfall"], "blurb": "Dramatic falls between Munnar and Pallivasal; thunderous in season.", "lat": 10.033, "lng": 77.005, "added": false, "verified": false, "bookable": false}, {"name": "2nd Mile View Point", "corridor": "Towards Cochin", "cats": ["Viewpoint"], "blurb": "Quiet overlook on the Cochin road — fewer crowds.", "lat": 10.03, "lng": 76.99, "added": false, "verified": false, "bookable": false}, {"name": "Chithirapuram Sunset Point", "corridor": "Towards Cochin", "cats": ["Viewpoint"], "blurb": "Old planters' township with colonial bungalows and golden-hour views.", "lat": 10.03, "lng": 77.03, "added": false, "verified": false, "bookable": false}, {"name": "Fly High — Hot Air Balloon", "corridor": "Towards Cochin", "cats": ["Adventure"], "blurb": "Tethered balloon rides over the tea country (weather-dependent).", "lat": 10.05, "lng": 77.02, "added": false, "verified": false, "bookable": true}, {"name": "Chocolate Factory", "corridor": "Towards Cochin", "cats": ["Family"], "blurb": "Handmade Munnar chocolate and spices — a fun family stop.", "lat": 10.06, "lng": 77.03, "added": false, "verified": false, "bookable": false}, {"name": "Sengulam Dam", "corridor": "Towards Cochin", "cats": ["Dam / Lake"], "blurb": "Balancing reservoir feeding the Pallivasal power station.", "lat": 10.02, "lng": 77.0, "added": false, "verified": false, "bookable": false}, {"name": "Pallivasal Falls & Power Station", "corridor": "Towards Cochin", "cats": ["Waterfall", "Cultural"], "blurb": "Kerala's first hydroelectric project with a roadside falls.", "lat": 10.02, "lng": 77.0, "added": true, "verified": false, "bookable": false}, {"name": "Spice Garden Visit", "corridor": "Towards Cochin", "cats": ["Nature", "Cultural"], "blurb": "Guided walk through cardamom, pepper and vanilla plots.", "lat": 10.05, "lng": 77.0, "added": false, "verified": false, "bookable": true}, {"name": "Cultural Events / Kalari Martial Arts", "corridor": "Towards Cochin", "cats": ["Cultural"], "blurb": "Evening Kathakali and Kalaripayattu performances in Munnar town.", "lat": 10.083, "lng": 77.06, "added": false, "verified": false, "bookable": true}, {"name": "Sita Devi (Devikulam) Lake", "corridor": "Towards Cochin", "cats": ["Dam / Lake", "Nature"], "blurb": "Quiet mineral lake ringed by hills — calm stop with trout fishing.", "lat": 10.05, "lng": 77.1, "added": true, "verified": false, "bookable": false}, {"name": "Chokramudi Peak", "corridor": "Trek Zones", "cats": ["Trek"], "blurb": "Half-day grassland summit trek with panoramic ridge views.", "lat": 10.062, "lng": 77.1, "added": false, "verified": false, "bookable": true}, {"name": "Lakshmi Hills", "corridor": "Trek Zones", "cats": ["Trek", "Viewpoint"], "blurb": "Tea-estate trek to a breezy hilltop above Munnar town.", "lat": 10.075, "lng": 77.05, "added": false, "verified": false, "bookable": true}, {"name": "Door of Heaven", "corridor": "Towards Cochin", "cats": ["Viewpoint"], "blurb": "Gap viewpoint near Devikulam, framed by a natural rock 'doorway' — a popular photo stop.", "lat": 10.045, "lng": 77.095, "added": true, "verified": false, "bookable": false}, {"name": "Shooting Point", "corridor": "Towards Mattupetty", "cats": ["Viewpoint", "Wildlife"], "blurb": "Grassland clearing on the Top Station road, ~18km from town — a known film-shooting spot and occasional wild elephant sighting area near the river.", "lat": 10.13, "lng": 77.18, "added": true, "verified": false, "bookable": false}, {"name": "Kallimali View Point", "corridor": "Towards Cochin", "cats": ["Viewpoint"], "blurb": "Remote viewpoint ~29km from Munnar via Anachal, overlooking the Ponmudi reservoir and forest catchment — quieter than the closer-in spots.", "lat": 9.97, "lng": 76.92, "added": true, "verified": false, "bookable": false}, {"name": "Karadipara View Point", "corridor": "Towards Munnar", "cats": ["Viewpoint"], "blurb": "Roadside viewpoint on the way into Munnar — exact position is loosely documented online, worth confirming before publishing.", "lat": 10.045, "lng": 77.14, "added": true, "verified": false, "bookable": false}, {"name": "Viripara Tea Garden View Point", "corridor": "Towards Mankulam", "cats": ["Viewpoint", "Tea"], "blurb": "Tea-estate viewpoint bordering Mankulam, reached via the Lekshmi Estate road roughly 15km from Munnar.", "lat": 9.98, "lng": 76.97, "added": true, "verified": false, "bookable": false}, {"name": "Viripara Waterfalls", "corridor": "Towards Mankulam", "cats": ["Waterfall"], "blurb": "Waterfall on the Mankulam river amid tea gardens — reachable via Lekshmi Estate or the Adimaly–Kallar route.", "lat": 9.975, "lng": 76.965, "added": true, "verified": false, "bookable": false}, {"name": "Yellapetty", "corridor": "Around Chinnakanal", "cats": ["Trek", "Nature"], "blurb": "Remote highland hamlet beyond Chinnakanal, often called Munnar's 'last village' — a trekking and camping base.", "lat": 10.0, "lng": 77.24, "added": true, "verified": false, "bookable": false}, {"name": "Karimutty Waterfalls", "corridor": "Towards Coimbatore", "cats": ["Waterfall", "Adventure"], "blurb": "Waterfall near Marayoor known for cliff-jumping and adventure activity — currents can be strong, exercise caution.", "lat": 10.26, "lng": 77.15, "added": true, "verified": false, "bookable": false}, {"name": "Cinnamon Gardens Spices Plantation", "corridor": "Towards Munnar", "cats": ["Nature", "Cultural"], "blurb": "Named spice garden and shop near Munnar town — guided walks through cinnamon, pepper and cardamom.", "lat": 10.08, "lng": 77.05, "added": true, "verified": false, "bookable": false}, {"name": "Cowboy Park", "corridor": "Towards Munnar", "cats": ["Family", "Adventure"], "blurb": "Family adventure park in Munnar town — horse riding, go-karting and kids' activities.", "lat": 10.07, "lng": 77.045, "added": true, "verified": false, "bookable": true}, {"name": "Dream Land Fun and Adventure Park", "corridor": "Towards Cochin", "cats": ["Family", "Adventure"], "blurb": "Adventure park near Anachal with ziplines, a skywalk and family rides.", "lat": 10.02, "lng": 76.985, "added": true, "verified": false, "bookable": true}, {"name": "Anamudi Shola National Park", "corridor": "Towards Coimbatore", "cats": ["Wildlife", "Nature"], "blurb": "Smaller shola-forest national park adjoining Eravikulam, protecting high-altitude grassland and forest habitat.", "lat": 10.19, "lng": 77.04, "added": true, "verified": false, "bookable": false}, {"name": "Pampadum Shola National Park", "corridor": "Towards Mattupetty", "cats": ["Wildlife", "Nature"], "blurb": "One of Kerala's smallest national parks — a shola-forest patch near Vattavada.", "lat": 10.21, "lng": 77.25, "added": true, "verified": false, "bookable": false}, {"name": "CSI Christ Church", "corridor": "Towards Munnar", "cats": ["Cultural"], "blurb": "Colonial-era church (1910) in Munnar town — a quiet heritage stop from the tea-plantation era.", "lat": 10.088, "lng": 77.062, "added": true, "verified": false, "bookable": false}, {"name": "Tiger Caves", "corridor": "Towards Mankulam", "cats": ["Cultural", "Adventure"], "blurb": "Rock-cut cave site near Viripara — naming/location is inconsistent across sources (some tie it to Marayoor instead), confirm before publishing.", "lat": 9.978, "lng": 76.958, "added": true, "verified": false, "bookable": false}], "defaultBase": "chinnakanal", "region": "Munnar, Kerala", "whatsapp": "919633779922", "sheetCsvUrl": "", "ga4MeasurementId": "", "guideInterests": ["Trekking", "Wildlife & Nature", "Cultural & Local Life", "Photography", "Family-friendly", "Adventure", "Tea Trails", "Other"], "guideRequestWebhookUrl": "", "comingSoon": [{"id": "resorts", "icon": "🏨", "title": "Resorts", "blurb": "Curated resort stays across Munnar's best corridors, matched to the spots you love."}, {"id": "homestays", "icon": "🏡", "title": "Homestays", "blurb": "Real Kerala hospitality — family-run homestays for a slower, more local Munnar."}, {"id": "experiences", "icon": "🌿", "title": "Local Experiences", "blurb": "Guided treks, tea-estate walks and curated add-ons — beyond what a map can show you."}, {"id": "packages", "icon": "🗺️", "title": "Munnar Packages", "blurb": "Multi-day itineraries bundling stay, transport and experiences — planned start to finish."}]};
 
 /* ============================================================
    2. STATE
@@ -646,6 +675,9 @@ const dom = {
   heroGuideLink: $("#heroGuideLink"),
   guideSection: $("#guideSection"),
   nearbyNote: $("#nearbyNote"),
+  consentBar: $("#consentBar"),
+  consentAccept: $("#consentAccept"),
+  consentDecline: $("#consentDecline"),
 };
 
 /* ============================================================
@@ -723,6 +755,7 @@ function setBase(id){
   const b = DATA.bases.find(x=>x.id===id) || DATA.bases[0];
   state.userLoc = {lat:b.lat, lng:b.lng, label:b.name};
   dom.locName.textContent = b.name;
+  track("select_base", {base:b.name});
   render();
 }
 function initGeolocation(){
@@ -736,11 +769,13 @@ function initGeolocation(){
         dom.locName.textContent = "My location";
         dom.gpsBtn.disabled = false;
         dom.gpsBtn.textContent = "Use my location";
+        track("gps_allow");
         render();
       },
       ()=>{
         dom.gpsBtn.disabled = false;
         dom.gpsBtn.textContent = "Use my location";
+        track("gps_deny");
         alert("Couldn't get your location — pick a base from the list instead.");
       },
       {enableHighAccuracy:true, timeout:8000}
@@ -765,18 +800,28 @@ function buildChips(){
     c.onclick = onclick;
     return c;
   };
-  dom.chips.appendChild(mk("All", "", state.activeCats.size===0, ()=>{ state.activeCats.clear(); render(); }));
+  dom.chips.appendChild(mk("All", "", state.activeCats.size===0, ()=>{ track("filter_category", {label:"All"}); state.activeCats.clear(); render(); }));
   allCats.forEach(cat=>{
     dom.chips.appendChild(mk(cat, DATA.cats[cat], state.activeCats.has(cat), ()=>{
+      const turningOn = !state.activeCats.has(cat);
+      track("filter_category", {label:cat, active:turningOn});
       state.activeCats.has(cat) ? state.activeCats.delete(cat) : state.activeCats.add(cat);
       render();
     }));
   });
 }
 function initSearch(){
+  let searchTimer;
   dom.search.addEventListener("input", (e)=>{
     state.query = e.target.value.toLowerCase().trim();
     render();
+    clearTimeout(searchTimer);
+    if(state.query){
+      // debounced so we log the finished query, not every keystroke
+      searchTimer = setTimeout(()=>{
+        track("search", { query: state.query, nearby_fallback: !!state.nearbyOrigin });
+      }, 800);
+    }
   });
 }
 
@@ -898,14 +943,32 @@ function updateTray(){
 function initDayPlanner(){
   dom.grid.addEventListener("click", (e)=>{
     const b = e.target.closest(".dayadd");
-    if(!b) return;
-    const n = decodeURIComponent(b.dataset.day);
-    state.dayList.has(n) ? state.dayList.delete(n) : state.dayList.add(n);
-    render();
+    if(b){
+      const n = decodeURIComponent(b.dataset.day);
+      state.dayList.has(n) ? state.dayList.delete(n) : state.dayList.add(n);
+      render();
+      return;
+    }
+    // Track Directions / Map / Book taps without touching their normal
+    // behavior (they're plain target="_blank" links, so nothing here
+    // blocks or delays the actual navigation).
+    const link = e.target.closest("a.btn");
+    if(link){
+      const item = link.closest(".item");
+      const name = item ? item.querySelector("h3").textContent : "";
+      if(link.classList.contains("primary")) track("click_directions", {attraction:name});
+      else if(link.classList.contains("map")) track("click_map_view", {attraction:name});
+      else if(link.classList.contains("book")) track("click_book_enquire", {attraction:name});
+    }
   });
-  dom.daySend.onclick = ()=>{ if(state.dayList.size) window.open(waLink(dayMsg()), "_blank"); };
+  dom.daySend.onclick = ()=>{
+    if(state.dayList.size){
+      track("day_planner_send", {count: state.dayList.size});
+      window.open(waLink(dayMsg()), "_blank");
+    }
+  };
   dom.dayClear.onclick = ()=>{ state.dayList.clear(); render(); };
-  dom.fab.onclick = ()=> window.open(waLink(planMsg()), "_blank");
+  dom.fab.onclick = ()=>{ track("click_plan_trip"); window.open(waLink(planMsg()), "_blank"); };
 }
 
 /* ============================================================
@@ -943,6 +1006,7 @@ function drawMarkers(list, origin){
 }
 function switchView(v){
   state.view = v;
+  track("view_toggle", {view:v});
   dom.listTab.classList.toggle("on", v==="list");
   dom.listTab.setAttribute("aria-selected", String(v==="list"));
   dom.mapTab.classList.toggle("on", v==="map");
@@ -999,6 +1063,7 @@ function initGuideForm(){
       notes: $("#gNotes").value.trim(),
       base: baseLabel(),
     };
+    track("guide_request_submit", {interest: f.interest, lang: f.lang});
     logGuideRequest({ type:"guide_request", ...f, submittedAt:new Date().toISOString() });
     window.open(waLink(guideMsg(f)), "_blank");
   });
@@ -1035,8 +1100,16 @@ function renderComingSoon(){
 }
 function initComingSoon(){
   renderComingSoon();
+  if(dom.soonGrid){
+    dom.soonGrid.addEventListener("click", (e)=>{
+      const btn = e.target.closest(".notify");
+      if(!btn) return;
+      const title = btn.closest(".sooncard")?.querySelector("h3")?.textContent || "";
+      track("coming_soon_notify", {item:title});
+    });
+  }
   if(dom.soonAll){
-    dom.soonAll.onclick = ()=> window.open(waLink(notifyAllMsg()), "_blank");
+    dom.soonAll.onclick = ()=>{ track("coming_soon_notify_all"); window.open(waLink(notifyAllMsg()), "_blank"); };
   }
 }
 
@@ -1073,7 +1146,54 @@ function loadSheetIfConfigured(){
 }
 
 /* ============================================================
-   16. BOOT
+   16. ANALYTICS — GA4 (custom events, loaded only after cookie
+       consent) + Vercel Web Analytics (cookieless, script tag near
+       top of file). Set DATA.ga4MeasurementId to a "G-XXXXXXX" ID
+       to turn GA4 on; leave blank to skip it (and the consent
+       banner) entirely — nothing is tracked until then.
+   ============================================================ */
+function loadGA4(){
+  const id = DATA.ga4MeasurementId;
+  if(!id || window.__ga4Loaded) return;
+  window.__ga4Loaded = true;
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){ window.dataLayer.push(arguments); }
+  window.gtag = gtag;
+  gtag('js', new Date());
+  gtag('config', id, { anonymize_ip:true });
+  const s = document.createElement('script');
+  s.async = true;
+  s.src = 'https://www.googletagmanager.com/gtag/js?id=' + id;
+  document.head.appendChild(s);
+}
+function track(name, params){
+  if(window.gtag) window.gtag('event', name, params || {});
+}
+function getConsent(){
+  try{ return localStorage.getItem('tm_analytics_consent'); }catch(e){ return null; }
+}
+function setConsent(v){
+  try{ localStorage.setItem('tm_analytics_consent', v); }catch(e){ /* ignore — falls back to asking every visit */ }
+}
+function initConsent(){
+  if(!DATA.ga4MeasurementId || !dom.consentBar) return; // nothing to gate if GA4 isn't configured
+  const existing = getConsent();
+  if(existing === "granted"){ loadGA4(); return; }
+  if(existing === "denied") return;
+  dom.consentBar.classList.add("show");
+  if(dom.consentAccept) dom.consentAccept.onclick = ()=>{
+    setConsent("granted");
+    dom.consentBar.classList.remove("show");
+    loadGA4();
+  };
+  if(dom.consentDecline) dom.consentDecline.onclick = ()=>{
+    setConsent("denied");
+    dom.consentBar.classList.remove("show");
+  };
+}
+
+/* ============================================================
+   17. BOOT
    ============================================================ */
 function boot(){
   populateBases();
@@ -1084,6 +1204,7 @@ function boot(){
   initGuideForm();
   initHeroGuideLink();
   initComingSoon();
+  initConsent();
   setBase(DATA.defaultBase);
   loadSheetIfConfigured();
 }
