@@ -448,6 +448,18 @@ footer .contacts a:hover{color:var(--cyan)}
   .btn.primary#gpsBtn{padding:11px 12px;font-size:13px}
 }
 </style>
+
+<!-- Vercel Web Analytics -->
+<script>
+  window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+
+<!-- Vercel Speed Insights -->
+<script>
+  window.si = window.si || function () { (window.siq = window.siq || []).push(arguments); };
+</script>
+<script defer src="/_vercel/speed-insights/script.js"></script>
 </head>
 <body>
 <header class="hero">
@@ -615,10 +627,6 @@ footer .contacts a:hover{color:var(--cyan)}
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
-<!-- Vercel Web Analytics — cookieless page-view tracking, no consent needed.
-     Only works once deployed on Vercel with Analytics enabled in the project
-     dashboard (Project → Analytics → Enable). Fails silently elsewhere. -->
-<script defer src="/_vercel/insights/script.js"></script>
 <script>
 (function(){
 "use strict";
